@@ -1,7 +1,8 @@
 "use client";
 import { z } from "zod";
-import { Button } from "../ui/button";
+import { toast } from "sonner";
 import UploadFormInput from "./upload-form-input";
+import { useUploadThing } from "@/utils/uploadthing";
 
 const schema = z.object({
   file: z
@@ -17,7 +18,22 @@ const schema = z.object({
 });
 
 const UploadForm = () => {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const { startUpload, routeConfig } = useUploadThing("pdfUploader", {
+    onClientUploadComplete: () => {
+      console.log("Upload successfully!");
+    },
+    onUploadError: (err) => {
+      console.error("An error has occured while upload", err);
+      toast.error("An error has occurred while uploading", {
+        description: err.message,
+      });
+    },
+    onUploadBegin: ({ file }) => {
+      console.log("Upload has begun for", file);
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
@@ -27,15 +43,39 @@ const UploadForm = () => {
     //validate file
     const validatedFields = schema.safeParse({ file });
     //schema validation with zod
-    console.log(validatedFields)
+    console.log(validatedFields);
     if (!validatedFields.success) {
       console.log(
         validatedFields.error.flatten().fieldErrors.file?.[0] ?? "Invalid File"
       );
+      toast("❌ Something went wrong", {
+        description:
+          validatedFields.error.flatten().fieldErrors.file?.[0] ??
+          "Invalid File",
+        style: { backgroundColor: "#f87171", color: "white" }, // Red destructive styling
+      });
+
+      return;
+    }
+    toast("📄 Uploading PDF", {
+      description: "We are uploading your PDF! ✨",
+    });
+
+    //upload file
+    const response = await startUpload([file]);
+
+    if (!response) {
+        toast("❌ Something went wrong", {
+            description: "Please use a different file",
+            style: { backgroundColor: "#dc2626", color: "white" }, // Tailwind red-600
+          });
+          
       return;
     }
 
-    //upload file
+    toast("📄 Processing PDF", {
+        description: "Hang tight! Our AI is reading through your document! ✨",
+      });
     //parse pdf using langchain
     //save summary to db
     //redirect to the [id] summary page

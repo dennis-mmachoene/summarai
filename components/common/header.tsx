@@ -25,7 +25,7 @@ const Header = () => {
       </div>
 
       <div className="flex lg:justify-end lg:flex-1">
-       <SignedIn> (
+       <SignedIn> 
           <div className="flex gap-2 items-center">
             <NavLink href="/upload">Upload PDF</NavLink>
             <div className="">Pro</div>
