@@ -3,8 +3,12 @@ import { z } from "zod";
 import { toast } from "sonner";
 import UploadFormInput from "./upload-form-input";
 import { useUploadThing } from "@/utils/uploadthing";
-import { generatePdfSummary } from "@/actions/upload-actions";
+import {
+  generatePdfSummary,
+  storePdfSummaryAction,
+} from "@/actions/upload-actions";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const schema = z.object({
   file: z
@@ -20,7 +24,8 @@ const schema = z.object({
 });
 
 const UploadForm = () => {
-  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const { startUpload, routeConfig } = useUploadThing("pdfUploader", {
@@ -42,7 +47,7 @@ const UploadForm = () => {
     e.preventDefault();
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const formData = new FormData(e.currentTarget);
       const file = formData.get("file") as File;
       console.log("submitted");
@@ -62,7 +67,7 @@ const UploadForm = () => {
             "Invalid File",
           style: { backgroundColor: "#f87171", color: "white" }, // Red destructive styling
         });
-        setIsLoading(false)
+        setIsLoading(false);
         return;
       }
       toast("📄 Uploading PDF", {
@@ -77,7 +82,7 @@ const UploadForm = () => {
           description: "Please use a different file",
           style: { backgroundColor: "#dc2626", color: "white" }, // Tailwind red-600
         });
-        setIsLoading(false)
+        setIsLoading(false);
         return;
       }
 
@@ -90,17 +95,35 @@ const UploadForm = () => {
       const { data = null, message = null } = result || {};
 
       if (data) {
+        let storeResult: any;
         toast("📄 Saving PDF...", {
           description: "Hang Tight! We are saving your summary! ✨",
         });
 
-        formRef.current?.reset();
-        setIsLoading(false)
+        if (data.summary) {
+          storeResult = await storePdfSummaryAction({
+            summary: data.summary,
+            fileUrl: response[0].serverData.file.url,
+            title: data.title,
+            fileName: file.name,
+          });
+
+          toast("📄 Summary saved!", {
+            description: "Your summary has been saved! ✨",
+          });
+
+          formRef.current?.reset();
+          router.push(`/summaries/${storeResult.data.id}`)
+        }
+
+        
       }
     } catch (err) {
-      setIsLoading(false)
+      setIsLoading(false);
       console.log(err);
       formRef.current?.reset();
+    }finally{
+      setIsLoading(false);
     }
 
     //save summary to db
@@ -108,7 +131,11 @@ const UploadForm = () => {
   };
   return (
     <div className="felx flex-col gap-8 w-full max-w-2xl mx-auto">
-      <UploadFormInput isLoading={isLoading} onSubmit={handleSubmit} ref={formRef} />
+      <UploadFormInput
+        isLoading={isLoading}
+        onSubmit={handleSubmit}
+        ref={formRef}
+      />
     </div>
   );
 };
