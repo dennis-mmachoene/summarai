@@ -98,7 +98,7 @@ const UploadForm = () => {
         setIsLoading(false)
       }
     } catch (err) {
-      setIsLoading(true)
+      setIsLoading(false)
       console.log(err);
       formRef.current?.reset();
     }
