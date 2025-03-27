@@ -1,6 +1,7 @@
 "use server";
 
 import { fetchAndExtractPdfText } from "@/lib/langChain";
+import { generateSummaryFromOpenAI } from "@/lib/openai";
 
 export async function generatePdfSummary(
   uploadResponse: [
@@ -30,22 +31,46 @@ export async function generatePdfSummary(
     },
   } = uploadResponse[0];
 
-  if(!pdfUrl){
+  if (!pdfUrl) {
     return {
-        success: "False",
-        message: "File upload failed",
-        data: null,
-      };
+      success: "False",
+      message: "File upload failed",
+      data: null,
+    };
   }
 
-  try{
-   const pdfText = await fetchAndExtractPdfText(pdfUrl);
-   console.log(pdfText)
-  }catch(err){
-    return {
+  try {
+    const pdfText = await fetchAndExtractPdfText(pdfUrl);
+    console.log(pdfText);
+
+    let summary;
+    try {
+      summary = await generateSummaryFromOpenAI(pdfText);
+      console.log(summary);
+    } catch (err) {
+      console.log(err);
+    }
+
+    if (!summary) {
+      return {
         success: "False",
-        message: "File upload failed",
+        message: "Failed to generate summary",
         data: null,
       };
+    }
+
+    return {
+      success: true,
+      message: "Summary generate successfully",
+      data: {
+        summary,
+      },
+    };
+  } catch (err) {
+    return {
+      success: "False",
+      message: "File upload failed",
+      data: null,
+    };
   }
 }
