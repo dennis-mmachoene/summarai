@@ -15,7 +15,7 @@ const SummaryPage = async (props: { params: Promise<{ id: string }> }) => {
   if (!summary) {
     notFound();
   }
-  const { title, summary_text, file_name, word_count, created_at,  } = summary;
+  const { title, summary_text, file_name, word_count, created_at, original_file_url } = summary;
 
   const readingTime = Math.ceil((word_count || 0)/200)
   return (
@@ -26,11 +26,12 @@ const SummaryPage = async (props: { params: Promise<{ id: string }> }) => {
           <div className="flex flex-col">
             <SummaryHeader title={title} createdAt={created_at} reading_time={readingTime}/>
           </div>
-          {file_name && <SourceInfo fileName={file_name} />}
+          {file_name && <SourceInfo title={title} summaryText={summary_text} createdAt={created_at} originalFileUrl={original_file_url} fileName={file_name} />}
 
 
           <div className="relative mt-4 sm:mt-8 lg:mt-16">
-            <div className="relative p-4 sm:p-6 lg:p-8 bg-white/80 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-xl border border-rose-100/30 transition-all duration-300 hover:shadow-2xl hover:bg-white/90 max-w-4xl mx-auto" />
+            
+            <div className="relative p-4 sm:p-6 lg:p-8 bg-white/80 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-xl border border-rose-100/30 transition-all duration-300 hover:shadow-2xl hover:bg-white/90 max-w-4xl mx-auto" >
             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground bg-white/90 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-xs ">
               <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
               {summary.word_count? summary.word_count : 0} words
@@ -42,6 +43,7 @@ const SummaryPage = async (props: { params: Promise<{ id: string }> }) => {
                 }
            
             </div>
+          </div>
           </div>
         </div>
       </div>
